@@ -116,6 +116,106 @@ app.delete("/api/user/:id", (req, res, next) => {
     });
 })
 
+
+//------------------------------------------api/vm
+//GET all vm
+app.get("/api/vms", (req, res, next) => {
+    var sql = "select * from virtualmachine"
+    var params = []
+    db.all(sql, params, (err, rows) => {
+        if (err) {
+          res.status(400).json({"error":err.message});
+          return;
+        }
+        res.json({
+            "message":"success",
+            "data":rows
+        })
+      });
+});
+
+//GET vm by id
+app.get("/api/vm/:id", (req, res, next) => {
+    var sql = "select * from virtualmachine where id = ?"
+    var params = [req.params.id]
+    db.get(sql, params, (err, row) => {
+        if (err) {
+          res.status(400).json({"error":err.message});
+          return;
+        }
+        res.json({
+            "message":"success",
+            "data":row
+        })
+      });
+});
+
+//POST add vm TODO
+app.post("/api/vm/", (req, res, next) => {
+    var errors=[]
+
+    if (errors.length){
+        res.status(400).json({"error":errors.join(",")});
+        return;
+    }
+    var data = {
+        name: req.body.name
+    }
+    var sql ='INSERT INTO virtualmachine (name) VALUES (?)'
+    var params =[data.name]
+    db.run(sql, params, function (err, result) {
+        if (err){
+            res.status(400).json({"error": err.message})
+            return;
+        }
+        res.json({
+            "message": "success",
+            "data": data,
+            "id" : this.lastID
+        })
+    });
+})
+
+//PATCH update vm TODO
+app.patch("/api/vm/:id", (req, res, next) => {
+    var data = {
+        name: req.body.name
+    }
+    db.run(
+        `UPDATE virtualmachine set 
+            name = COALESCE(?,name), 
+            leasee = COALESCE(?,leasee),
+            status = COALESCE(?,status), 
+            notes = COALESCE(?,notes)
+            WHERE id = ?`,
+        [data.name, req.params.id],
+        function (err, result) {
+            if (err){
+                res.status(400).json({"error": res.message})
+                return;
+            }
+            res.json({
+                message: "success",
+                data: data,
+                changes: this.changes
+            })
+    });
+})
+
+//DELETE vm
+app.delete("/api/vm/:id", (req, res, next) => {
+    db.run(
+        'DELETE FROM virtualmachine WHERE id = ?',
+        req.params.id,
+        function (err, result) {
+            if (err){
+                res.status(400).json({"error": res.message})
+                return;
+            }
+            res.json({"message":"deleted", changes: this.changes})
+    });
+})
+
 // Default response for any other request
 app.use(function(req, res){
     res.status(404);
