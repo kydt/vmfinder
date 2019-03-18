@@ -37,7 +37,7 @@ app.get("/api/users", (req, res, next) => {
       });
 });
 
-//GET users by id
+//GET user by id
 app.get("/api/user/:id", (req, res, next) => {
     var sql = "select * from user where id = ?"
     var params = [req.params.id]
@@ -76,6 +76,43 @@ app.post("/api/user/", (req, res, next) => {
             "data": data,
             "id" : this.lastID
         })
+    });
+})
+
+//PATCH update user
+app.patch("/api/user/:id", (req, res, next) => {
+    var data = {
+        name: req.body.name
+    }
+    db.run(
+        `UPDATE user set 
+           name = COALESCE(?,name)
+           WHERE id = ?`,
+        [data.name, req.params.id],
+        function (err, result) {
+            if (err){
+                res.status(400).json({"error": res.message})
+                return;
+            }
+            res.json({
+                message: "success",
+                data: data,
+                changes: this.changes
+            })
+    });
+})
+
+//DELETE user
+app.delete("/api/user/:id", (req, res, next) => {
+    db.run(
+        'DELETE FROM user WHERE id = ?',
+        req.params.id,
+        function (err, result) {
+            if (err){
+                res.status(400).json({"error": res.message})
+                return;
+            }
+            res.json({"message":"deleted", changes: this.changes})
     });
 })
 
